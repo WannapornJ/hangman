@@ -42,6 +42,7 @@
 }
 
 .guessing-character {
-	border-bottom: 4px solid green;
+	border-bottom: 4px solid lightsalmon;
 	width: 20px;
+	color: white;
 }

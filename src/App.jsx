@@ -39,35 +39,53 @@ function App() {
     "y",
     "z",
   ];
-  const [guessword, setGuessword] = useState([]);
+  const [questionWord, setQuestionWord] = useState([]);
   const [guessChar, setGuessChar] = useState([]);
+  const [dummyWord, setDummyWord] = useState([]);
   const [count, setCount] = useState(8);
   const [isWin, setIsWin] = useState(false);
 
   const splitWords = (word) => {
     let guess = word.split("");
-    setGuessword(guess);
+    setQuestionWord(guess);
+    setDummyWord(Array(word.length).fill(""));
   };
   const genWord = () => {
     let rand = Math.floor(Math.random() * words.length + 1);
     splitWords(words[rand]);
   };
-  const checkWin = () => {
-    let uniq = guessword.filter((c, index) => guessword.indexOf(c) === index);
-    // please do it till the end of the game
-
-    //
+  const isInQuestion = (char) => {
+    if (questionWord.indexOf(char) >= 0) {
+      let temp = [...dummyWord];
+      questionWord.forEach((c, id) => {
+        if (c == char) temp[id] = c;
+      });
+      setDummyWord(temp);
+      return 1;
+    }
+    return 0;
+  };
+  const checkWin = (dummyWord, questionWord) => {
+    if (dummyWord.join("") != "" && questionWord.join("") != "") {
+      if (dummyWord.join("") === questionWord.join("")) {
+        setIsWin(true);
+        return 1;
+      }
+      setIsWin(false);
+      return 0;
+    }
   };
   const handleClick = (e) => {
     e.preventDefault();
-    checkWin();
     let char = e.target.value;
-    if (!isWin) {
-      if (guessword.indexOf(char) < 0 && count > 0) {
-        setCount((prev) => prev - 1);
-      }
-      setGuessChar([...guessChar, char]);
+    if (guessChar.indexOf(char) >= 0) {
+      alert(`You've guess "${char}" already`);
+      return;
     }
+    if (!isInQuestion(char)) {
+      setCount((prev) => prev - 1);
+    }
+    setGuessChar((prev) => [...prev, char]);
   };
   const retry = () => {
     window.location.reload();
@@ -75,42 +93,50 @@ function App() {
   useEffect(() => {
     genWord();
   }, []);
-
+  useEffect(() => {
+    checkWin(dummyWord, questionWord);
+  }, [guessChar]);
   return (
     <>
       <h1>Hangman</h1>
-      <div
-        className="display-word"
-        style={{ display: "flex", justifyContent: "center", gap: "10px" }}
-      >
-        {guessword &&
-          guessword.map((char, id) => (
-			// if you colud fix this nonsense hidden characters
-            <h2
-              key={id}
-              className="guessing-character"
-              style={
-                guessChar.indexOf(char) >= 0
-                  ? { color: "white" }
-                  : { color: "#242424" }
-              }
-            >
-              {char}
-            </h2>
-          ))}
-      </div>
-      <div className="count">Ramianing try: {count}</div>
-      {count == 0 || isWin ? (
-        <div>
-          You're so fucking noob bro. <button onClick={retry}>Retry</button>
-        </div>
+      {!isWin ? (
+        <>
+          <div
+            className="display-word"
+            style={{ display: "flex", justifyContent: "center", gap: "10px" }}
+          >
+            {dummyWord &&
+              dummyWord.map((char, id) => (
+                <h2 key={id} className="guessing-character">
+                  {" "}
+                  {char}{" "}
+                </h2>
+              ))}
+          </div>
+          <div className="count">Ramianing try: {count}</div>
+          {count == 0 ? (
+            <div>
+              You're so fucking bad noob bro.{" "}
+              <button onClick={retry}>Retry</button>
+            </div>
+          ) : (
+            <div className="key">
+              {char.map((alph, id) => (
+                <button
+                  value={alph}
+                  onClick={handleClick}
+                  key={id}
+                  disabled={guessChar.indexOf(alph) >= 0}
+                >
+                  {alph}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="key">
-          {char.map((alph, id) => (
-            <button value={alph} onClick={handleClick} key={id}>
-              {alph}
-            </button>
-          ))}
+        <div>
+          YOU WIN. CONGRATES!!. <button onClick={retry}>Play again</button>
         </div>
       )}
     </>
